@@ -1,6 +1,9 @@
 import csv
 from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
 
 def getData(data_path):
     csv_path = data_path + "driving_log.csv"
@@ -15,9 +18,9 @@ def getData(data_path):
         steeringValue = []
         row = next(reader) #move past the header row
         for row in reader: #format: center name, left name, right name, steering, throttle, brake, speed
-            row[0] = img_path + row[0]
-            row[1] = img_path + row[1]
-            row[2] = img_path + row[2]
+            row[0] = data_path + row[0]
+            row[1] = data_path + row[1]
+            row[2] = data_path + row[2]
             csvRows.append(row)
 
     #Split into training and testing sets
@@ -29,4 +32,27 @@ def getData(data_path):
     y_test = [item[3] for item in csvTest]
     return(X_train, y_train, X_test, y_test)
 
-# X_train, y_train, X_test, y_test = getData("data/udacityData/data/")
+
+def generator_data(data, angle, batch_size):
+    while 1:
+        batch_train = np.zeros((batch_size, 64, 64, 3), dtype = np.float32)
+        batch_angle = np.zeros((batch_size,), dtype = np.float32)
+        index = np.arange(data.shape[0])
+        for i in range(batch_size):
+            random = int(np.random.choice(data.shape[0],1))
+            batch_train[i] = data[random]
+            batch_angle[i] = angle[random]
+        yield batch_train, batch_angle
+
+def load_image(image_path):
+    img = mpimg.imread(image_path)
+    return img
+
+def display_image(img):
+    plt.figure()
+    plt.imshow(img)
+    plt.show()
+    print('image size:', img.shape)
+
+X_train, y_train, X_test, y_test = getData("data/udacityData/data/")
+display_image(load_image(X_train[0]))
