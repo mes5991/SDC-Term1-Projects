@@ -34,15 +34,22 @@ def getData(data_path):
 
 
 def generator_data(data, angle, batch_size):
+    index = np.arange(len(data))
     while 1:
-        batch_train = np.zeros((batch_size, 64, 64, 3), dtype = np.float32)
-        batch_angle = np.zeros((batch_size,), dtype = np.float32)
-        index = np.arange(data.shape[0])
+        batch_train = np.zeros((batch_size, 160, 320, 3), dtype = np.float32)
+        batch_angle = np.zeros((batch_size), dtype = np.float32)
         for i in range(batch_size):
-            random = int(np.random.choice(data.shape[0],1))
-            batch_train[i] = data[random]
+            try:
+                random = int(np.random.choice(data.shape[0],1))
+            except:
+                index = np.arange(len(data))
+                batch_train = batch_train[:i,:,:]
+                batch_angle = batch_angle[:i]
+                break
+            batch_train[i] = cv2.imread(data[random])
+            batch_train[i] = batch_train[i] - np.mean(batch_train[i])
             batch_angle[i] = angle[random]
-        yield batch_train, batch_angle
+        yield (batch_train, batch_angle)
 
 def load_image(image_path):
     img = mpimg.imread(image_path)
@@ -53,6 +60,3 @@ def display_image(img):
     plt.imshow(img)
     plt.show()
     print('image size:', img.shape)
-
-X_train, y_train, X_test, y_test = getData("data/udacityData/data/")
-display_image(load_image(X_train[0]))
