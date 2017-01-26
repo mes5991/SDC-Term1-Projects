@@ -1,62 +1,50 @@
-import data
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
-from sklearn.preprocessing import LabelBinarizer
 from keras.models import Sequential
-from keras.layers.core import Dense, Activation, Flatten, Dropout
-from keras.layers.convolutional import Convolution2D
-from keras.layers.pooling import MaxPooling2D
-from keras.optimizers import SGD, Adam, RMSprop
+from keras.layers.core import Flatten, Dense, Dropout
+from keras.layers.convolutional import Convolution2D, MaxPooling2D, ZeroPadding2D
+from keras.optimizers import SGD
+import cv2, numpy as np
 
-if 0:
-    '''Run line below to resave training and testing CSV files'''
-    data.load_csv()
+def VGG_16(weights_path=None):
+    model = Sequential()
+    model.add(ZeroPadding2D((1,1),input_shape=(3,224,224)))
+    model.add(Convolution2D(64, 3, 3, activation='relu'))
+    model.add(ZeroPadding2D((1,1)))
+    model.add(Convolution2D(64, 3, 3, activation='relu'))
+    model.add(MaxPooling2D((2,2), strides=(2,2)))
 
-#Get training data
-X_train, y_train = data.get_training_data()
+    model.add(ZeroPadding2D((1,1)))
+    model.add(Convolution2D(128, 3, 3, activation='relu'))
+    model.add(ZeroPadding2D((1,1)))
+    model.add(Convolution2D(128, 3, 3, activation='relu'))
+    model.add(MaxPooling2D((2,2), strides=(2,2)))
 
-#Display an image
-if 0:
-    plt.figure()
-    plt.imshow(X_train[0])
-    plt.show()
+    model.add(ZeroPadding2D((1,1)))
+    model.add(Convolution2D(256, 3, 3, activation='relu'))
+    model.add(ZeroPadding2D((1,1)))
+    model.add(Convolution2D(256, 3, 3, activation='relu'))
+    model.add(ZeroPadding2D((1,1)))
+    model.add(Convolution2D(256, 3, 3, activation='relu'))
+    model.add(MaxPooling2D((2,2), strides=(2,2)))
 
-#Print out image shape
-print('Image shape:', X_train[0].shape)
+    model.add(ZeroPadding2D((1,1)))
+    model.add(Convolution2D(512, 3, 3, activation='relu'))
+    model.add(ZeroPadding2D((1,1)))
+    model.add(Convolution2D(512, 3, 3, activation='relu'))
+    model.add(ZeroPadding2D((1,1)))
+    model.add(Convolution2D(512, 3, 3, activation='relu'))
+    model.add(MaxPooling2D((2,2), strides=(2,2)))
 
-#One-hot encode the labels
-label_binarizer = LabelBinarizer()
-y_one_hot = label_binarizer.fit_transform(y_train)
-print('Labels One-hot encoded')
+    model.add(ZeroPadding2D((1,1)))
+    model.add(Convolution2D(512, 3, 3, activation='relu'))
+    model.add(ZeroPadding2D((1,1)))
+    model.add(Convolution2D(512, 3, 3, activation='relu'))
+    model.add(ZeroPadding2D((1,1)))
+    model.add(Convolution2D(512, 3, 3, activation='relu'))
+    model.add(MaxPooling2D((2,2), strides=(2,2)))
 
-
-
-X_train = np.array(X_train)
-y_one_hot = np.array(y_one_hot)
-print(type(X_train))
-raw_input('break')
-
-#Build model
-model = Sequential()
-model.add(Convolution2D(32, 3, 3, input_shape=(160, 320, 3)))
-model.add(MaxPooling2D((2, 2)))
-model.add(Dropout(0.5))
-model.add(Activation('relu'))
-model.add(Flatten())
-model.add(Dense(128))
-model.add(Activation('relu'))
-model.add(Dense(43))
-model.add(Activation('relu'))
-model.add(Dense(1))
-model.add(Activation('softmax'))
-print("Model Built")
-
-#Compile model
-model.compile('adam', 'categorical_crossentropy', ['accuracy'])
-print('Model Compiled')
-
-#Train model
-print('Training...')
-history = model.fit(X_train, y_one_hot, nb_epoch = 10, validation_split = 0.2)
-print('Model Trained!')
+    model.add(Flatten())
+    model.add(Dense(4096, activation='relu'))
+    model.add(Dropout(0.5))
+    model.add(Dense(4096, activation='relu'))
+    model.add(Dropout(0.5))
+    model.add(Dense(1000, activation='softmax'))
